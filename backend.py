@@ -58,8 +58,15 @@ logger = logging.getLogger(__name__)
 
 # ==================== STYLE CONTROL ====================
 def build_topic_only_prompt(analysis):
+    """Build detailed image generation prompt"""
     topic = analysis.get("topic", "women wellness")
-    prompt = f"{topic}"
+    elements = ", ".join(analysis.get("visual_elements", []))
+    colors = analysis.get("colors", [])
+    color_names = []
+    for c in colors:
+        for name, hex_val in BRAND_COLORS.items():
+            if hex_val == c:
+                color_names.append(name)
     return prompt
 
 def is_valid_hex(color):
@@ -572,6 +579,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
