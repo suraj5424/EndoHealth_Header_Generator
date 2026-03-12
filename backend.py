@@ -121,32 +121,32 @@ def build_prompt(analysis):
     color emphasis:
     {", ".join(color_names) if color_names else "soft pink and cream"}
 
-    SPECIFIC ELEMENTS TO INCLUDE:
-    - {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
-    - detailed background with context and depth
-    - multiple visual layers for richness
-    - prominent central figure or focal point
-    - supporting decorative elements    
+    # SPECIFIC ELEMENTS TO INCLUDE:
+    # - {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
+    # - detailed background with context and depth
+    # - multiple visual layers for richness
+    # - prominent central figure or focal point
+    # - supporting decorative elements    
 
-    COMPOSITION REQUIREMENTS:
-    - DETAILED illustration with rich visual content
-    - subject occupies 60-70% of frame
-    - no large empty spaces or blank areas
-    - well-balanced with multiple elements
-    - professional editorial quality
-    - full, complete scene
+    # COMPOSITION REQUIREMENTS:
+    # - DETAILED illustration with rich visual content
+    # - subject occupies 60-70% of frame
+    # - no large empty spaces or blank areas
+    # - well-balanced with multiple elements
+    # - professional editorial quality
+    # - full, complete scene
 
-    MOOD AND FEELING:
-    calming, supportive, professional healthcare aesthetic
-    hopeful and empowering
-    trustworthy and warm
-    inviting and gentle
+    # MOOD AND FEELING:
+    # calming, supportive, professional healthcare aesthetic
+    # hopeful and empowering
+    # trustworthy and warm
+    # inviting and gentle
 
-    TECHNICAL:
-    high resolution editorial illustration
-    clean, polished finish
-    suitable for medical publication
-    detailed watercolor technique
+    # TECHNICAL:
+    # high resolution editorial illustration
+    # clean, polished finish
+    # suitable for medical publication
+    # detailed watercolor technique
 
     IMPORTANT: 
     Produce an image inspired by the topic: {topic}. The image should accurately reflect the key concepts, mood, and context of the topic. Create a FULL, DETAILED scene - not minimal or sparse
@@ -211,7 +211,7 @@ def validate_and_enforce_brand_colors(colors):
 
 def get_topic_from_title(title):
     """
-    Use Together AI for title analysis
+    Do title analysis
     Returns: topic name, suggested colors, visual elements
     """
     together_result = _analyze_with_together_ai(title)
@@ -667,6 +667,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
