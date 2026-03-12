@@ -419,7 +419,7 @@ def wrap_text(draw, text, font, max_width):
     return lines
 
 
-def get_font(size=32):
+def get_font(size=52):
     """Load font with multiple fallbacks"""
     font_paths = [
         "arial.ttf",
@@ -607,4 +607,5 @@ if __name__ == "__main__":
         status = "✅" if r["status"] == "success" else "❌"
         print(f"{status} {r['index']}. {r['title'][:40]}...")
     print("="*50)
+
     print(f"Output folder: {OUTPUT_DIR}")
