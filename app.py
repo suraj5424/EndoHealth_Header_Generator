@@ -197,7 +197,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### ⚡ Quick Actions")
     
-    if st.button("🗑️ Clear Output Folder"):
+    if st.button("🗑️ Clear Output Folder", use_container_width=True):
         if OUTPUT_DIR.exists():
             for f in OUTPUT_DIR.glob("*.png"):
                 f.unlink()
@@ -208,7 +208,7 @@ with st.sidebar:
             st.success("✅ Output folder cleared!")
             st.rerun()
     
-    if st.button("🔄 Refresh Page"):
+    if st.button("🔄 Refresh Page", use_container_width=True):
         st.rerun()
     
     st.markdown("---")
@@ -267,7 +267,7 @@ st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
 generate_btn = st.button(
     "🎨 Generate All Headers",
     type="primary",
-    width='stretch',
+    use_container_width=True,
     disabled=not (together_configured and nvidia_configured) or title_count == 0
 )
 
@@ -332,7 +332,7 @@ if generate_btn and together_configured and nvidia_configured:
                                 caption=f"🎨 {result.get('topic', 'General')} | "
                                         f"Color: {result.get('color', 'N/A')} | "
                                         f"⏱️ {result.get('duration', 0)}s",
-                                width='stretch'
+                                use_container_width=True
                             )
                         
                         # Metadata row
@@ -383,7 +383,7 @@ if generate_btn and together_configured and nvidia_configured:
                     data=f.read(),
                     file_name=f"endo_headers_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
                     mime="application/zip",
-                    width='stretch'
+                    use_container_width=True
                 )
             
             # Individual download info
@@ -404,7 +404,7 @@ elif st.session_state.generation_results and not generate_btn:
                         image_path,
                         caption=f"🎨 {result.get('topic', 'General')} | "
                                 f"Color: {result.get('color', 'N/A')}",
-                        width='stretch'
+                        use_container_width=True
                     )
             else:
                 st.error(f"❌ Generation failed: {result.get('error', 'Unknown')}")
