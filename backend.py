@@ -59,37 +59,45 @@ logger = logging.getLogger(__name__)
 # ==================== STYLE CONTROL ====================
 
 GLOBAL_STYLE = """
-high quality editorial illustration for a modern women's health magazine
+professional editorial illustration for women's health magazine
+high quality digital art, soft watercolor style
+
+composition requirements:
+- DETAILED scene with multiple visual elements
+- subject should be PROMINENT and occupy 60-70% of the space
+- include background elements and context
+- well-balanced composition with depth
+- no empty white space - fill the frame meaningfully
+- rich, layered illustration
 
 art style:
-soft watercolor painting
-delicate brush strokes
+soft watercolor painting with defined shapes
+delicate but VISIBLE brush strokes
 subtle paper texture
-minimalist medical editorial art
-modern digital health aesthetic
-
-composition:
-subject placed on the RIGHT side
-large negative space on the LEFT
-clean wide banner layout
+modern medical editorial illustration
+clean, professional aesthetic
 
 color palette:
-soft pastel pink
-lavender
-cream tones
+soft pastel pink (#A32A53 tones)
+lavender (#B8A4E8 tones)
+cream (#F7EDF3 tones)
+warm, inviting colors
 
 lighting:
-soft diffused lighting
-calm warm atmosphere
+soft diffused natural lighting
+calm, warm, supportive atmosphere
+bright and airy but with substance
 """
 
 NEGATIVE_PROMPT = """
-text, watermark, logo, typography,
+text, words, letters, watermark, logo, typography,
+minimal, sparse, empty space, blank areas,
 low quality, blurry, distorted anatomy,
 clipart, stock icon style, oversaturated colors,
-dark, black, nighttime
+dark, black, nighttime, heavy shadows,
+simple, basic, incomplete sketch,
+too much white space, empty background
 """
-
 
 def build_prompt(analysis):
     """Build detailed image generation prompt"""
@@ -113,16 +121,37 @@ def build_prompt(analysis):
     color emphasis:
     {", ".join(color_names) if color_names else "soft pink and cream"}
 
-    subject theme:
-    women's health and wellness, hopeful and empowering
+    SPECIFIC ELEMENTS TO INCLUDE:
+    - {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
+    - detailed background with context and depth
+    - multiple visual layers for richness
+    - prominent central figure or focal point
+    - supporting decorative elements    
 
-    visual goal:
-    calming, supportive, professional healthcare feeling
-    bright and airy composition
-    soft organic shapes and gentle curves
+    COMPOSITION REQUIREMENTS:
+    - DETAILED illustration with rich visual content
+    - subject occupies 60-70% of frame
+    - no large empty spaces or blank areas
+    - well-balanced with multiple elements
+    - professional editorial quality
+    - full, complete scene
 
-    no text in image
-    no dark areas
+    MOOD AND FEELING:
+    calming, supportive, professional healthcare aesthetic
+    hopeful and empowering
+    trustworthy and warm
+    inviting and gentle
+
+    TECHNICAL:
+    high resolution editorial illustration
+    clean, polished finish
+    suitable for medical publication
+    detailed watercolor technique
+
+    IMPORTANT: 
+    Create a FULL, DETAILED scene - not minimal or sparse
+    Fill the composition with meaningful visual elements
+    Rich, layered illustration with depth and context
     """
 
     return prompt
@@ -638,5 +667,6 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
