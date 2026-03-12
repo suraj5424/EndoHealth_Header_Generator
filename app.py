@@ -27,68 +27,60 @@ st.set_page_config(
 # Custom CSS for larger images and better styling
 st.markdown("""
 <style>
-    /* Larger image containers */
-    .stImage img {
-        max-height: 500px !important;
-        width: auto !important;
-        max-width: 100% !important;
-    }
-    
-    /* Better card styling for results */
-    .result-card {
-        background: #f8f9fa;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 10px 0;
-        border: 1px solid #e9ecef;
-    }
-    
-    /* Success/Error highlights */
-    .success-badge {
-        background: #d4edda;
-        color: #155724;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85em;
-        display: inline-block;
-    }
-    
-    .error-badge {
-        background: #f8d7da;
-        color: #721c24;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.85em;
-        display: inline-block;
-    }
-    
-    /* Sidebar styling */
-    .sidebar-info {
-        background: #f0f2f6;
-        padding: 15px;
-        border-radius: 8px;
-        margin: 10px 0;
-    }
-    
-    /* Color swatches */
-    .color-swatch {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        margin: 4px;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    /* Full title display - no truncation */
-    .full-title {
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-    }
+/* Larger image preview */
+.stImage img {
+    max-height: 650px !important;
+    width: 100% !important;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+/* Result cards */
+.result-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
+    border: 1px solid #e9ecef;
+}
+
+/* Large title preview inside expander */
+.title-preview {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+/* Expander titles */
+.streamlit-expanderHeader {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+/* Text */
+.full-title {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    font-size: 20px !important;
+}
+
+/* Sidebar cards */
+.sidebar-info {
+    background: #f0f2f6;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+/* Title input textarea */
+textarea {
+    font-size: 16px !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
 
 # Page title
 st.title("🌸 Endo Health Header Generator")
@@ -472,4 +464,5 @@ st.markdown("""
 <small>© 2026 Endo Health GmbH. All rights reserved.</small>
 </div>
 """, unsafe_allow_html=True)
+
 
