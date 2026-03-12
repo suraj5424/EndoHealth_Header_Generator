@@ -284,8 +284,7 @@ def generate_image(prompt, seed=None):
         "width": GENERATION_SIZE,
         "height": GENERATION_SIZE,
         "seed": seed,
-        "steps": 4, 
-        "guidance_scale": 7.5  # ✅ Added for better prompt adherence
+        "steps": 4
     }
     
     logger.info(f"🎨 Sending prompt to NVIDIA Flux...")
@@ -639,4 +638,5 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
