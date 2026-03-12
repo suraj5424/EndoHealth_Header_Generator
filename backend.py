@@ -466,7 +466,7 @@ def create_banner(image_bytes, title, accent_color):
     
     # Add title text
     draw = ImageDraw.Draw(canvas)
-    font = get_font(32)
+    font = get_font(49)
     
     # Wrap title text
     margin = 30
@@ -609,4 +609,5 @@ if __name__ == "__main__":
     print("="*50)
 
     print(f"Output folder: {OUTPUT_DIR}")
+
 
