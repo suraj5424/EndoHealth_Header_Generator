@@ -113,7 +113,7 @@ def build_prompt(analysis):
     prompt = f"""
     {GLOBAL_STYLE}
 
-    topic focus: {topic}
+    BLOG POST TITLE: {topic}
 
     illustration elements:
     {elements}
@@ -149,7 +149,7 @@ def build_prompt(analysis):
     detailed watercolor technique
 
     IMPORTANT: 
-    Create a FULL, DETAILED scene - not minimal or sparse
+    Produce an image inspired by the topic: {topic}. The image should accurately reflect the key concepts, mood, and context of the topic. Create a FULL, DETAILED scene - not minimal or sparse
     Fill the composition with meaningful visual elements
     Rich, layered illustration with depth and context
     """
@@ -667,6 +667,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
