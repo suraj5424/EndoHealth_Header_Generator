@@ -414,41 +414,41 @@ elif st.session_state.generation_results and not generate_btn:
 
 st.markdown("---")
 
-st.markdown("### 📚 Documentation")
+# st.markdown("### 📚 Documentation")
 
-info_col1, info_col2, info_col3 = st.columns(3)
+# info_col1, info_col2, info_col3 = st.columns(3)
 
-with info_col1:
-    with st.container():
-        st.markdown("#### 🔍 How It Works")
-        st.markdown("""
-        1. **Title Analysis** - Together.ai extracts topic and theme
-        2. **Color Selection** - AI suggests brand-appropriate colors
-        3. **Image Generation** - NVIDIA Flux creates watercolor artwork
-        4. **Composition** - Title overlay applied with proper spacing
-        5. **Export** - PNG saved with metadata tracking
-        """)
+# with info_col1:
+#     with st.container():
+#         st.markdown("#### 🔍 How It Works")
+#         st.markdown("""
+#         1. **Title Analysis** - Together.ai extracts topic and theme
+#         2. **Color Selection** - AI suggests brand-appropriate colors
+#         3. **Image Generation** - NVIDIA Flux creates watercolor artwork
+#         4. **Composition** - Title overlay applied with proper spacing
+#         5. **Export** - PNG saved with metadata tracking
+#         """)
 
-with info_col2:
-    with st.container():
-        st.markdown("#### 🎨 Brand Guidelines")
-        st.markdown("""
-        - **Style:** Soft, warm, professional
-        - **Palette:** Pink, lavender, cream tones
-        - **Mood:** Calming, supportive, trustworthy
-        - **Format:** 1200×630px (Open Graph standard)
-        - **Text:** White on colored background (left 40%)
-        """)
+# with info_col2:
+#     with st.container():
+#         st.markdown("#### 🎨 Brand Guidelines")
+#         st.markdown("""
+#         - **Style:** Soft, warm, professional
+#         - **Palette:** Pink, lavender, cream tones
+#         - **Mood:** Calming, supportive, trustworthy
+#         - **Format:** 1200×630px (Open Graph standard)
+#         - **Text:** White on colored background (left 40%)
+#         """)
 
-with info_col3:
-    with st.container():
-        st.markdown("#### 📁 File Output")
-        st.markdown("""
-        - **Images:** `endo_output/XX_title.png`
-        - **Meta** `endo_output/metadata.json`
-        - **Archive:** `endo_output/headers.zip`
-        - **Logs:** Console + timestamped entries
-        """)
+# with info_col3:
+#     with st.container():
+#         st.markdown("#### 📁 File Output")
+#         st.markdown("""
+#         - **Images:** `endo_output/XX_title.png`
+#         - **Meta** `endo_output/metadata.json`
+#         - **Archive:** `endo_output/headers.zip`
+#         - **Logs:** Console + timestamped entries
+#         """)
 
 # ==================== FOOTER ====================
 
@@ -473,6 +473,7 @@ st.markdown("""
 <small>© 2026 Endo Health GmbH. All rights reserved.</small>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
