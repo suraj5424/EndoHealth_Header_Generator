@@ -57,7 +57,48 @@ logger = logging.getLogger(__name__)
 
 
 # ==================== STYLE CONTROL ====================
-def build_topic_only_prompt(analysis):
+GLOBAL_STYLE = """
+professional editorial illustration for women's health magazine
+high quality digital art, soft watercolor style
+
+composition requirements:
+- DETAILED scene with multiple visual elements
+- subject should be PROMINENT and occupy 60-70% of the space
+- include background elements and context
+- well-balanced composition with depth
+- no empty white space - fill the frame meaningfully
+- rich, layered illustration
+
+art style:
+soft watercolor painting with defined shapes
+delicate but VISIBLE brush strokes
+subtle paper texture
+modern medical editorial illustration
+clean, professional aesthetic
+
+color palette:
+soft pastel pink (#A32A53 tones)
+lavender (#B8A4E8 tones)
+cream (#F7EDF3 tones)
+warm, inviting colors
+
+lighting:
+soft diffused natural lighting
+calm, warm, supportive atmosphere
+bright and airy but with substance
+"""
+
+NEGATIVE_PROMPT = """
+words, letters, watermark, logo, typography,
+minimal, sparse, empty space, blank areas,
+low quality, blurry, distorted anatomy,
+clipart, stock icon style, oversaturated colors,
+dark, black, nighttime, heavy shadows,
+simple, basic, incomplete sketch,
+too much white space, empty background
+"""
+
+def build_prompt(analysis):
     """Build detailed image generation prompt"""
     topic = analysis.get("topic", "women wellness")
     elements = ", ".join(analysis.get("visual_elements", []))
@@ -67,7 +108,53 @@ def build_topic_only_prompt(analysis):
         for name, hex_val in BRAND_COLORS.items():
             if hex_val == c:
                 color_names.append(name)
+    
+    prompt = f"""
+    {GLOBAL_STYLE}
+
+    BLOG POST TITLE: {topic}
+
+    illustration elements:
+    {elements}
+
+    color emphasis:
+    {", ".join(color_names) if color_names else "soft pink and cream"}
+
+    SPECIFIC ELEMENTS TO INCLUDE:
+    - {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
+    - detailed background with context and depth
+    - multiple visual layers for richness
+    - prominent central figure or focal point
+    - supporting decorative elements    
+
+    COMPOSITION REQUIREMENTS:
+    - DETAILED illustration with rich visual content
+    - subject occupies 60-70% of frame
+    - no large empty spaces or blank areas
+    - well-balanced with multiple elements
+    - professional editorial quality
+    - full, complete scene
+
+    MOOD AND FEELING:
+    calming, supportive, professional healthcare aesthetic
+    hopeful and empowering
+    trustworthy and warm
+    inviting and gentle
+
+    TECHNICAL:
+    high resolution editorial illustration
+    clean, polished finish
+    suitable for medical publication
+    detailed watercolor technique
+
+    IMPORTANT: 
+    Produce an image inspired by the topic: {topic}. The image should accurately reflect the key concepts, mood, and context of the topic. Create a FULL, DETAILED scene - not minimal or sparse
+    Fill the composition with meaningful visual elements
+    Rich, layered illustration with depth and context
+    """
+
     return prompt
+
 
 def is_valid_hex(color):
     """Validate hex color format"""
@@ -579,6 +666,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
