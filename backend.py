@@ -76,28 +76,27 @@ Dark, nighttime, heavy shadows
 Simple, basic, incomplete sketch
 """
 
-def build_balanced_prompt(analysis):
-    """Generate illustration prompt with style consistency and light topic relevance"""
+def build_prompt(analysis):
+    """Build detailed image generation prompt"""
     topic = analysis.get("topic", "women wellness")
-    visual_elements = analysis.get("visual_elements", [])
-    elements = ", ".join(visual_elements) if visual_elements else "soft healing elements, gentle botanical accents, flowing organic shapes"
-    
+    elements = analysis.get("visual_elements", [])
     colors = analysis.get("colors", [])
     color_names = [name for name, hex_val in BRAND_COLORS.items() if hex_val in colors]
-    color_str = ", ".join(color_names) if color_names else "soft pink and cream"
 
     prompt = f"""
     {GLOBAL_STYLE}
 
-    Illustration elements: {elements}
-    Color emphasis: {color_str}
-
+    BLOG POST TITLE: {topic}
     Light topical guidance: visually reflect the topic "{topic}" without altering core design or style. Use subtle cues, symbols, or context related to the topic.
 
+
+    Illustration elements: {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
+    Color emphasis: {', '.join(color_names) if color_names else 'soft pink and cream'}
+
     Composition:
-    - Prominent subject occupying 60-70% of frame
+    - Prominent subject (60-70% of frame)
     - Rich, layered scene with depth and context
-    - Detailed background and supporting elements
+    - Detailed background and multiple supporting elements
     - No large empty spaces
 
     Mood & Feel:
@@ -107,8 +106,9 @@ def build_balanced_prompt(analysis):
     High-resolution, polished watercolor illustration suitable for medical editorial
 
     IMPORTANT:
-    Produce a FULL, DETAILED scene in this style. Focus on design consistency while allowing the image to subtly justify the topic.
+    Produce a FULL, DETAILED scene inspired by the topic. Avoid minimal or sparse compositions.
     """
+
     return prompt
 
 
@@ -622,6 +622,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
