@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Endo Health Header Generator - Backend (Updated)
-Uses Together.ai for LLM analysis + NVIDIA Flux for image generation
-"""
-
 import os
 import io
 import json
@@ -12,12 +6,13 @@ import hashlib
 import base64
 import logging
 import re
+import random
+import numpy as np
 from pathlib import Path
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import requests
 from dotenv import load_dotenv
-import random
 
 
 # Load environment variables
@@ -25,12 +20,12 @@ load_dotenv()
 
 # ==================== CONFIGURATION ====================
 
-# Brand Colors (Endo Health style) - FIXED: single #
+# Brand Colors (Endo Health style)
 BRAND_COLORS = {
     "pink": "#A32A53",
     "cream": "#F7EDF3",
     "white": "#FFFFFF",
-    "lavender": "#B8A4E8"  # Added missing color
+    "lavender": "#B8A4E8"
 }
 
 # Image sizes
@@ -48,8 +43,6 @@ TOGETHER_AI_API_KEY = os.getenv("TOGETHER_AI_API_KEY")
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 
 # Check API keys
-if not CEREBRAS_API_KEY:
-    raise ValueError("⚠️ CEREBRAS_API_KEY not found in .env file")
 if not TOGETHER_AI_API_KEY:
     raise ValueError("⚠️ TOGETHER_AI_API_KEY not found in .env file")
 if not NVIDIA_API_KEY:
@@ -61,9 +54,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-# ==================== HELPER FUNCTIONS ====================
 
 
 # ==================== STYLE CONTROL ====================
@@ -96,15 +86,22 @@ calm warm atmosphere
 NEGATIVE_PROMPT = """
 text, watermark, logo, typography,
 low quality, blurry, distorted anatomy,
-clipart, stock icon style, oversaturated colors
+clipart, stock icon style, oversaturated colors,
+dark, black, nighttime
 """
 
 
-
 def build_prompt(analysis):
+    """Build detailed image generation prompt"""
     topic = analysis.get("topic", "women wellness")
     elements = ", ".join(analysis.get("visual_elements", []))
-
+    colors = analysis.get("colors", [])
+    color_names = []
+    for c in colors:
+        for name, hex_val in BRAND_COLORS.items():
+            if hex_val == c:
+                color_names.append(name)
+    
     prompt = f"""
     {GLOBAL_STYLE}
 
@@ -113,24 +110,33 @@ def build_prompt(analysis):
     illustration elements:
     {elements}
 
+    color emphasis:
+    {", ".join(color_names) if color_names else "soft pink and cream"}
+
     subject theme:
-    women's health and wellness
+    women's health and wellness, hopeful and empowering
 
     visual goal:
     calming, supportive, professional healthcare feeling
+    bright and airy composition
+    soft organic shapes and gentle curves
 
     no text in image
+    no dark areas
     """
 
     return prompt
 
+
 def is_valid_hex(color):
     """Validate hex color format"""
-    return bool(re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', color))
+    if not color or not isinstance(color, str):
+        return False
+    return bool(re.match(r'^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$', color.strip()))
 
 
 def get_topic_color_mapping():
-    """Map health topics to appropriate brand colors for better visual consistency"""
+    """Map health topics to appropriate brand colors"""
     return {
         "endometriosis": [BRAND_COLORS["pink"], BRAND_COLORS["lavender"]],
         "pms": [BRAND_COLORS["cream"], BRAND_COLORS["lavender"]],
@@ -151,11 +157,11 @@ def get_brand_color_for_topic(topic):
 
 def validate_and_enforce_brand_colors(colors):
     """Validate colors and ensure they are from the brand palette"""
-    if not colors:
+    if not colors or not isinstance(colors, list):
         return [BRAND_COLORS["pink"], BRAND_COLORS["cream"]]
     
     # Filter to only brand colors
-    brand_colors = [c for c in colors if c in BRAND_COLORS.values()]
+    brand_colors = [c.strip() for c in colors if is_valid_hex(c) and c.strip() in BRAND_COLORS.values()]
     
     # If no brand colors found, use defaults
     if not brand_colors:
@@ -164,7 +170,6 @@ def validate_and_enforce_brand_colors(colors):
     # If only one brand color, add a complementary one
     if len(brand_colors) == 1:
         primary = brand_colors[0]
-        # Add a complementary color based on the primary
         if primary == BRAND_COLORS["pink"]:
             brand_colors.append(BRAND_COLORS["cream"])
         elif primary == BRAND_COLORS["lavender"]:
@@ -172,115 +177,31 @@ def validate_and_enforce_brand_colors(colors):
         else:
             brand_colors.append(BRAND_COLORS["pink"])
     
-    return brand_colors[:2]  # Return maximum 2 colors
-
+    return brand_colors[:2]
 
 
 def get_topic_from_title(title):
     """
-    Use Cerebras API as main service, with Together AI as backup
+    Use Together AI for title analysis
     Returns: topic name, suggested colors, visual elements
     """
-    # Try Cerebras API first
-    cerebras_result = _analyze_with_cerebras(title)
-    if cerebras_result:
-        # Validate and enforce brand colors
-        cerebras_result["colors"] = validate_and_enforce_brand_colors(cerebras_result.get("colors", []))
-        return cerebras_result
-    
-    # Fall back to Together AI if Cerebras fails
-    logger.warning("Cerebras API failed, falling back to Together AI")
     together_result = _analyze_with_together_ai(title)
     if together_result:
-        # Validate and enforce brand colors
         together_result["colors"] = validate_and_enforce_brand_colors(together_result.get("colors", []))
         return together_result
     
-    # Final fallback to default values
-    logger.warning("Both APIs failed, using default fallback")
+    # Fallback to default values
+    logger.warning("⚠️ API analysis failed, using default fallback")
     return {
-        "topic": "general",
+        "topic": "wellness",
         "colors": [BRAND_COLORS["pink"], BRAND_COLORS["cream"]],
-        "visual_elements": ["soft shapes", "gentle colors", "wellness icons"]
+        "visual_elements": ["soft abstract shapes", "gentle waves", "healing light"]
     }
-
-
-def _analyze_with_cerebras(title):
-    """Analyze title using Cerebras API"""
-    url = "https://api.cerebras.ai/v1/chat/completions"
-    
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {CEREBRAS_API_KEY}"
-    }
-    
-    prompt = f"""
-    Analyze this women's health blog title: "{title}"
-    
-    Return JSON with:
-    - topic: one of [endometriosis, pms, menopause, fertility, nutrition, interview, wellness, general]
-    - colors: 2 hex colors from your brand palette: {list(BRAND_COLORS.values())}
-    - visual_elements: 3 simple visual ideas (e.g., "flowers", "calm waves", "healing light")
-    
-    Return ONLY valid JSON, no other text.
-    """
-    
-    data = {
-        "stream": False,
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0,
-        "max_completion_tokens": -1,
-        "seed": 0,
-        "top_p": 1
-    }
-    
-    # Try different models as shown in the example
-    models = [
-        "gpt-oss-120b",
-        "llama3.1-8b", 
-        "zai-gtm-4.7",
-        "qwen-3-235b-a22b-instruct-2507"
-    ]
-    
-    for model in models:
-        try:
-            response = requests.post(url, headers=headers, json={**data, "model": model}, timeout=30)
-            
-            if response.status_code == 200:
-                response_data = response.json()
-                assistant_message = response_data["choices"][0]["message"]["content"].strip()
-                
-                # Clean response and parse JSON
-                text = assistant_message
-                if "```json" in text:
-                    text = text.split("```json")[1].split("```")[0].strip()
-                elif "```" in text:
-                    text = text.split("```")[1].split("```")[0].strip()
-                
-                if text:
-                    parsed = json.loads(text)
-                    
-                    # Validate required fields
-                    if isinstance(parsed, dict):
-                        # Validate colors
-                        if "colors" in parsed:
-                            parsed["colors"] = [c for c in parsed["colors"] if is_valid_hex(c)]
-                            if not parsed["colors"]:
-                                parsed["colors"] = [BRAND_COLORS["pink"], BRAND_COLORS["lavender"]]
-                        
-                        logger.info(f"✅ Cerebras API successful with model: {model}")
-                        return parsed
-                
-        except Exception as e:
-            logger.debug(f"Cerebras model {model} failed: {e}")
-            continue
-    
-    return None
 
 
 def _analyze_with_together_ai(title):
-    """Analyze title using Together AI as backup"""
-    url = "https://api.together.xyz/v1/chat/completions"
+    """Analyze title using Together AI"""
+    url = "https://api.together.xyz/v1/chat/completions"  # ✅ FIXED: No trailing spaces
     
     headers = {
         "Authorization": f"Bearer {TOGETHER_AI_API_KEY}",
@@ -292,14 +213,14 @@ def _analyze_with_together_ai(title):
     
     Return JSON with:
     - topic: one of [endometriosis, pms, menopause, fertility, nutrition, interview, wellness, general]
-    - colors: 2 hex colors from your brand palette: {list(BRAND_COLORS.values())}
+    - colors: 2 hex colors from this palette: {list(BRAND_COLORS.values())}
     - visual_elements: 3 simple visual ideas (e.g., "flowers", "calm waves", "healing light")
     
     Return ONLY valid JSON, no other text.
     """
     
     data = {
-        "model": "ServiceNow-AI/Apriel-1.5-15b-Thinker",
+        "model": "meta-llama/Llama-3-8b-chat-hf",
         "messages": [
             {"role": "user", "content": prompt}
         ],
@@ -308,6 +229,7 @@ def _analyze_with_together_ai(title):
     }
     
     try:
+        logger.info("🔍 Analyzing title with Together AI...")
         response = requests.post(url, headers=headers, json=data, timeout=30)
         response.raise_for_status()
         
@@ -328,11 +250,11 @@ def _analyze_with_together_ai(title):
                 if isinstance(parsed, dict):
                     # Validate colors
                     if "colors" in parsed:
-                        parsed["colors"] = [c for c in parsed["colors"] if is_valid_hex(c)]
+                        parsed["colors"] = [c.strip() for c in parsed["colors"] if is_valid_hex(c)]
                         if not parsed["colors"]:
                             parsed["colors"] = [BRAND_COLORS["pink"], BRAND_COLORS["lavender"]]
                     
-                    logger.info("✅ Together AI backup successful")
+                    logger.info("✅ Together AI analysis successful")
                     return parsed
         
     except Exception as e:
@@ -343,51 +265,111 @@ def _analyze_with_together_ai(title):
 
 def generate_image(prompt, seed=None):
     """
-    Generate image using NVIDIA Flux API (exact format as provided)
+    Generate image using NVIDIA Flux API
     Returns: image bytes
     """
-    # FIXED: Removed trailing spaces from URL
-    url = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
+    url = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"  # ✅ FIXED: No trailing spaces
     
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
         "Content-Type": "application/json"
     }
     
+    # Use provided seed or generate random one
+    if seed is None:
+        seed = random.randint(1, 1000000)
+    
     payload = {
         "prompt": prompt,
         "width": GENERATION_SIZE,
         "height": GENERATION_SIZE,
-        "seed": seed if seed else 0,
-        "steps": 4
+        "seed": seed,
+        "steps": 25,  # ✅ Increased from 4 for better quality
+        "guidance_scale": 7.5  # ✅ Added for better prompt adherence
     }
+    
+    logger.info(f"🎨 Sending prompt to NVIDIA Flux...")
     
     # Retry logic with exponential backoff
     for attempt in range(1, 4):
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response = requests.post(url, headers=headers, json=payload, timeout=90)
+            
+            logger.info(f"📡 NVIDIA API Response: {response.status_code}")
             
             if response.status_code == 200:
                 result = response.json()
+                
+                # Validate response structure
+                if "artifacts" not in result or not result["artifacts"]:
+                    logger.error("❌ No artifacts in NVIDIA response")
+                    raise RuntimeError("Empty image response from NVIDIA")
+                
                 img_base64 = result["artifacts"][0]["base64"]
                 img_bytes = base64.b64decode(img_base64)
+                
+                # Validate image is not empty/black
+                test_img = Image.open(io.BytesIO(img_bytes))
+                img_array = np.array(test_img)
+                mean_brightness = np.mean(img_array[:, :, :3])
+                
+                logger.info(f"📊 Image brightness: {mean_brightness:.1f}/255")
+                
+                if mean_brightness < 50:
+                    logger.warning(f"⚠️ Generated image too dark (brightness: {mean_brightness:.1f})")
+                    if attempt < 3:
+                        payload["seed"] = random.randint(1, 1000000)  # Try different seed
+                        logger.info(f"🔄 Retrying with new seed: {payload['seed']}")
+                        continue
+                
                 logger.info(f"✅ Image generated successfully")
                 return img_bytes
+                
             elif response.status_code == 429:
                 retry_after = int(response.headers.get('Retry-After', 2))
-                logger.warning(f"Rate limited, waiting {retry_after}s")
+                logger.warning(f"⏳ Rate limited, waiting {retry_after}s")
                 time.sleep(retry_after)
                 continue
             else:
-                logger.warning(f"Attempt {attempt}: API error {response.status_code} - {response.text[:200]}")
+                logger.error(f"❌ Attempt {attempt}: API error {response.status_code} - {response.text[:300]}")
         
         except Exception as e:
-            logger.warning(f"Attempt {attempt}: {e}")
+            logger.error(f"❌ Attempt {attempt}: {e}")
         
         if attempt < 3:
-            time.sleep((2 ** attempt) + random.uniform(0.5, 1.5))
+            wait_time = (2 ** attempt) + random.uniform(0.5, 1.5)
+            logger.info(f"⏳ Waiting {wait_time:.1f}s before retry...")
+            time.sleep(wait_time)
     
     raise RuntimeError("❌ Image generation failed after 3 attempts")
+
+
+def create_fallback_gradient(width, height, base_color):
+    """Create a soft gradient fallback when image generation fails"""
+    gradient = Image.new("RGBA", (width, height), (255, 255, 255, 255))
+    draw = ImageDraw.Draw(gradient)
+    
+    # Create soft watercolor-like gradient
+    for i in range(0, height, 15):
+        ratio = i / height
+        # Blend between base color and white
+        r = int(base_color[0] * (1 - ratio * 0.5) + 255 * ratio * 0.5)
+        g = int(base_color[1] * (1 - ratio * 0.5) + 255 * ratio * 0.5)
+        b = int(base_color[2] * (1 - ratio * 0.5) + 255 * ratio * 0.5)
+        draw.line([(0, i), (width, i)], fill=(r, g, b, 255), width=15)
+    
+    # Add subtle organic shapes
+    for _ in range(5):
+        x = random.randint(0, width)
+        y = random.randint(0, height)
+        radius = random.randint(50, 150)
+        alpha = random.randint(30, 80)
+        draw.ellipse(
+            [x - radius, y - radius, x + radius, y + radius],
+            fill=(*base_color, alpha)
+        )
+    
+    return gradient
 
 
 def wrap_text(draw, text, font, max_width):
@@ -419,20 +401,35 @@ def wrap_text(draw, text, font, max_width):
     return lines
 
 
-def get_font(size=100):
-    """Load font with multiple fallbacks"""
+def get_font(size=72):
+    """Load font with multiple fallbacks - ✅ FIXED: Larger default size"""
     font_paths = [
-        "arial.ttf",
-        "Helvetica.ttf",
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-        "/System/Library/Fonts/Helvetica.ttc"
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "/System/Library/Fonts/Helvetica.ttc",
+        "/System/Library/Fonts/HelveticaNeue.ttc",
+        "C:\\Windows\\Fonts\\arial.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf",
+        "arial.ttf",
+        "Arial.ttf",
+        "Helvetica.ttf"
     ]
+    
     for path in font_paths:
         try:
-            return ImageFont.truetype(path, size)
-        except (IOError, OSError):
+            font = ImageFont.truetype(path, size)
+            logger.info(f"✅ Font loaded: {path}")
+            return font
+        except (IOError, OSError, FileNotFoundError):
             continue
-    return ImageFont.load_default()
+    
+    # Last resort - try default with size
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        # Older PIL versions don't support size parameter
+        return ImageFont.load_default()
 
 
 def create_banner(image_bytes, title, accent_color):
@@ -453,8 +450,24 @@ def create_banner(image_bytes, title, accent_color):
     right_width = FINAL_WIDTH - left_width
     
     # Load generated image
-    ai_image = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
-    ai_image = ImageOps.fit(ai_image, (right_width, FINAL_HEIGHT))
+    try:
+        ai_image = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+        
+        # 🔧 Check if image is mostly black (generation failed)
+        ai_image_array = np.array(ai_image)
+        mean_brightness = np.mean(ai_image_array[:, :, :3])
+        
+        logger.info(f"📊 Generated image brightness: {mean_brightness:.1f}/255")
+        
+        if mean_brightness < 50:
+            logger.warning("⚠️ Generated image too dark, using fallback gradient")
+            ai_image = create_fallback_gradient(right_width, FINAL_HEIGHT, rgb_color)
+        else:
+            ai_image = ImageOps.fit(ai_image, (right_width, FINAL_HEIGHT))
+    
+    except Exception as e:
+        logger.error(f"❌ Failed to load generated image: {e}")
+        ai_image = create_fallback_gradient(right_width, FINAL_HEIGHT, rgb_color)
     
     # Create left panel with color
     left_panel = Image.new("RGBA", (left_width, FINAL_HEIGHT), (*rgb_color, 255))
@@ -466,35 +479,44 @@ def create_banner(image_bytes, title, accent_color):
     
     # Add title text
     draw = ImageDraw.Draw(canvas)
-    font = get_font(49)
+    
+    # 🔧 FIXED: Increased font size from 49 to 72
+    font = get_font(72)
     
     # Wrap title text
-    margin = 30
+    margin = 40  # 🔧 Increased from 30 for better padding
     max_width = left_width - (margin * 2)
     lines = wrap_text(draw, title, font, max_width)
     
-    # Calculate vertical center
-    total_height = sum(draw.textbbox((0, 0), line, font=font)[3] for line in lines)
+    # Calculate vertical center with proper line heights
+    line_heights = []
+    for line in lines:
+        bbox = draw.textbbox((0, 0), line, font=font)
+        line_heights.append(bbox[3] - bbox[1])
+    
+    line_spacing = 15  # Space between lines
+    total_height = sum(line_heights) + (len(lines) - 1) * line_spacing
     y = (FINAL_HEIGHT - total_height) // 2
     
-    # Draw each line
-    for line in lines:
+    # Draw each line with better spacing
+    for i, line in enumerate(lines):
         draw.text((margin, y), line, font=font, fill=(255, 255, 255, 255))
-        bbox = draw.textbbox((0, 0), line, font=font)
-        y += bbox[3] + 10
+        y += line_heights[i] + line_spacing
     
-    # Convert to RGB and save
+    # Convert to RGB and return
     final_image = canvas.convert("RGB")
     return final_image
 
 
 def save_image(image, title, index):
     """Save image to file with safe filename"""
-    safe_name = "".join(c if c.isalnum() else "_" for c in title.lower())[:50]
+    safe_name = "".join(c if c.isalnum() or c in " -_" else "_" for c in title.lower())[:50]
+    safe_name = safe_name.strip(" _-")
     filename = f"{index:02d}_{safe_name}.png"
     filepath = OUTPUT_DIR / filename
     
-    image.save(filepath, format="PNG", optimize=True)
+    image.save(filepath, format="PNG", optimize=True, quality=95)
+    logger.info(f"💾 Saved: {filepath}")
     return filename
 
 
@@ -513,24 +535,23 @@ def generate_header(title, index):
     
     try:
         # Step 1: Analyze title with Together.ai
-        logger.info(f"[{index:02d}] Analyzing: {title[:40]}...")
+        logger.info(f"[{index:02d}] Analyzing: {title[:50]}...")
         analysis = get_topic_from_title(title)
         result["topic"] = analysis.get("topic", "general")
         
         # Step 2: Build image prompt
-        colors = ", ".join(analysis.get("colors", []))
-        elements = ", ".join(analysis.get("visual_elements", []))
-        
         prompt = build_prompt(analysis)
+        logger.info(f"[{index:02d}] Prompt built ({len(prompt)} chars)")
         
         # Step 3: Generate image with NVIDIA Flux
         logger.info(f"[{index:02d}] Generating image...")
-        seed = int(hashlib.sha1(title.encode()).hexdigest()[:8], 16)
+        seed = int(hashlib.sha1(title.encode()).hexdigest()[:8], 16) % 1000000
         image_bytes = generate_image(prompt, seed)
         
         # Step 4: Create banner with title
         logger.info(f"[{index:02d}] Creating banner...")
-        accent_color = analysis.get("colors", [BRAND_COLORS["pink"]])[0]
+        colors = analysis.get("colors", [BRAND_COLORS["pink"]])
+        accent_color = colors[0] if colors else BRAND_COLORS["pink"]
         banner = create_banner(image_bytes, title, accent_color)
         
         # Step 5: Save image
@@ -542,7 +563,7 @@ def generate_header(title, index):
         elapsed = time.time() - start_time
         result["status"] = "success"
         result["duration"] = round(elapsed, 2)
-        logger.info(f"[{index:02d}] ✅ Saved: {filename}")
+        logger.info(f"[{index:02d}] ✅ Saved: {filename} ({elapsed:.1f}s)")
         
     except Exception as e:
         elapsed = time.time() - start_time
@@ -598,16 +619,23 @@ if __name__ == "__main__":
         "Building an SOS Plan for Flare-Ups"
     ]
     
+    print("\n" + "="*60)
+    print("🌸 ENDO HEALTH HEADER GENERATOR - TEST RUN")
+    print("="*60)
+    print(f"Output folder: {OUTPUT_DIR.absolute()}")
+    print("="*60 + "\n")
+    
     results = generate_batch(TEST_TITLES)
     
-    print("\n" + "="*50)
+    print("\n" + "="*60)
     print("📊 GENERATION SUMMARY")
-    print("="*50)
+    print("="*60)
     for r in results:
         status = "✅" if r["status"] == "success" else "❌"
-        print(f"{status} {r['index']}. {r['title'][:40]}...")
-    print("="*50)
-
-    print(f"Output folder: {OUTPUT_DIR}")
-
-
+        duration = r.get("duration", 0)
+        print(f"{status} {r['index']:02d}. {r['title'][:45]}... ({duration}s)")
+    print("="*60)
+    
+    success_count = sum(1 for r in results if r["status"] == "success")
+    print(f"\n🎉 Success: {success_count}/{len(results)} images")
+    print(f"📁 Output: {OUTPUT_DIR.absolute()}")
