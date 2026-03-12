@@ -57,11 +57,57 @@ logger = logging.getLogger(__name__)
 
 
 # ==================== STYLE CONTROL ====================
+GLOBAL_STYLE = """
+professional editorial illustration for women's health magazine
+high quality digital art, soft watercolor style
 
-def build_minimal_prompt(analysis):
-    """Build concise image generation prompt for women's health illustration"""
+composition requirements:
+- DETAILED scene with multiple visual elements
+- subject should be PROMINENT and occupy 60-70% of the space
+- include background elements and context
+- well-balanced composition with depth
+- no empty white space - fill the frame meaningfully
+- rich, layered illustration
+
+art style:
+soft watercolor painting with defined shapes
+delicate but VISIBLE brush strokes
+subtle paper texture
+modern medical editorial illustration
+clean, professional aesthetic
+
+color palette:
+soft pastel pink (#A32A53 tones)
+lavender (#B8A4E8 tones)
+cream (#F7EDF3 tones)
+warm, inviting colors
+
+lighting:
+soft diffused natural lighting
+calm, warm, supportive atmosphere
+bright and airy but with substance
+"""
+
+NEGATIVE_PROMPT = """
+words, letters, watermark, logo, typography,
+minimal, sparse, empty space, blank areas,
+low quality, blurry, distorted anatomy,
+clipart, stock icon style, oversaturated colors,
+dark, black, nighttime, heavy shadows,
+simple, basic, incomplete sketch,
+too much white space, empty background
+"""
+
+def build_prompt(analysis):
+    """Build detailed image generation prompt"""
     topic = analysis.get("topic", "women wellness")
-    elements = ", ".join(analysis.get("visual_elements", [])) or "soft healing elements, gentle botanical accents, flowing organic shapes"
+    elements = ", ".join(analysis.get("visual_elements", []))
+    colors = analysis.get("colors", [])
+    color_names = []
+    for c in colors:
+        for name, hex_val in BRAND_COLORS.items():
+            if hex_val == c:
+                color_names.append(name)
     
     prompt = f"""
     professional editorial illustration for women's health magazine
@@ -80,7 +126,6 @@ def build_minimal_prompt(analysis):
     IMPORTANT: full, detailed scene with depth; avoid minimal or sparse composition
     """
     return prompt
-
 
 def is_valid_hex(color):
     """Validate hex color format"""
@@ -592,6 +637,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
