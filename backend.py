@@ -58,61 +58,28 @@ logger = logging.getLogger(__name__)
 
 # ==================== STYLE CONTROL ====================
 
-def build_prompt(analysis):
-    """Build detailed image generation prompt"""
+def build_minimal_prompt(analysis):
+    """Build concise image generation prompt for women's health illustration"""
     topic = analysis.get("topic", "women wellness")
-    elements = ", ".join(analysis.get("visual_elements", []))
-    colors = analysis.get("colors", [])
-    color_names = []
-    for c in colors:
-        for name, hex_val in BRAND_COLORS.items():
-            if hex_val == c:
-                color_names.append(name)
+    elements = ", ".join(analysis.get("visual_elements", [])) or "soft healing elements, gentle botanical accents, flowing organic shapes"
     
     prompt = f"""
+    professional editorial illustration for women's health magazine
+    high quality digital art, soft watercolor style
+    subject should occupy 60-70% of frame
+    detailed scene with multiple elements, rich background, and layered composition
+    soft pastel pink, lavender, cream tones, warm and inviting
+    soft diffused natural lighting, calm and supportive atmosphere
+    prominent central figure, supporting decorative elements
+    calming, hopeful, trustworthy mood
+    clean, polished finish suitable for medical publication
+
     BLOG POST TITLE: {topic}
+    illustration elements: {elements}
 
-    illustration elements:
-    {elements}
-
-    color emphasis:
-    {", ".join(color_names) if color_names else "soft pink and cream"}
-
-    SPECIFIC ELEMENTS TO INCLUDE:
-    - {', '.join(elements) if elements else 'soft healing elements, gentle botanical accents, flowing organic shapes'}
-    - detailed background with context and depth
-    - multiple visual layers for richness
-    - prominent central figure or focal point
-    - supporting decorative elements    
-
-    COMPOSITION REQUIREMENTS:
-    - DETAILED illustration with rich visual content
-    - subject occupies 60-70% of frame
-    - no large empty spaces or blank areas
-    - well-balanced with multiple elements
-    - professional editorial quality
-    - full, complete scene
-
-    MOOD AND FEELING:
-    calming, supportive, professional healthcare aesthetic
-    hopeful and empowering
-    trustworthy and warm
-    inviting and gentle
-
-    TECHNICAL:
-    high resolution editorial illustration
-    clean, polished finish
-    suitable for medical publication
-    detailed watercolor technique
-
-    IMPORTANT: 
-    Produce an image inspired by the topic: {topic}. The image should accurately reflect the key concepts, mood, and context of the topic. Create a FULL, DETAILED scene - not minimal or sparse
-    Fill the composition with meaningful visual elements
-    Rich, layered illustration with depth and context
+    IMPORTANT: full, detailed scene with depth; avoid minimal or sparse composition
     """
-
     return prompt
-
 
 
 def is_valid_hex(color):
@@ -625,6 +592,7 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
 
 
 
