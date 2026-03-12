@@ -284,7 +284,7 @@ def generate_image(prompt, seed=None):
         "width": GENERATION_SIZE,
         "height": GENERATION_SIZE,
         "seed": seed,
-        "steps": 25,  # ✅ Increased from 4 for better quality
+        "steps": 4, 
         "guidance_scale": 7.5  # ✅ Added for better prompt adherence
     }
     
@@ -639,3 +639,4 @@ if __name__ == "__main__":
     success_count = sum(1 for r in results if r["status"] == "success")
     print(f"\n🎉 Success: {success_count}/{len(results)} images")
     print(f"📁 Output: {OUTPUT_DIR.absolute()}")
+
