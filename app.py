@@ -197,7 +197,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### ⚡ Quick Actions")
     
-    if st.button("🗑️ Clear Output Folder", width='stretch'):
+    if st.button("🗑️ Clear Output Folder"):
         if OUTPUT_DIR.exists():
             for f in OUTPUT_DIR.glob("*.png"):
                 f.unlink()
@@ -208,7 +208,7 @@ with st.sidebar:
             st.success("✅ Output folder cleared!")
             st.rerun()
     
-    if st.button("🔄 Refresh Page", width='stretch'):
+    if st.button("🔄 Refresh Page"):
         st.rerun()
     
     st.markdown("---")
